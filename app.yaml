@@ -1,1 +1,16 @@
 runtime: python37
+env: flex
+entrypoint: gunicorn -b :$PORT main:app
+
+runtime_config:
+  python_version: 3
+  
+env_variables:
+    # Replace user, password, database, and instance connection name with the values obtained
+    # when configuring your Cloud SQL instance.
+    SQLALCHEMY_DATABASE_URI: >-
+      mysql+pymysql://root:HackSC19!@/wavedb?unix_socket=/cloudsql/hackscwave:us-central1:hackscdb
+      # Replace project and instance with the values obtained  when configuring your
+# Cloud SQL instance.
+beta_settings:
+    cloud_sql_instances: INSTANCE_CONNECTION_NAME
