@@ -1,22 +1,12 @@
 from flask import Flask, request, jsonify
 import flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, Integer, DateTime
+from sqlalchemy import Column, Integer, DateTime, DECIMAL
 import json
 import datetime
 import os
-import socket
 
 app = Flask(__name__)
-
-
-def is_ipv6(addr):
-    """Checks if a given address is an IPv6 address."""
-    try:
-        socket.inet_pton(socket.AF_INET6, addr)
-        return True
-    except socket.error:
-        return False
 
 
 # Environment variables are defined in app.yaml.
@@ -59,8 +49,8 @@ class Wave(db.Model):
 
     id = db.Column(db.Integer, unique=True, primary_key=True, nullable=False)
     userID = db.Column(db.Integer)
-    lat = db.Column(db.Integer)
-    lon = db.Column(db.Integer)
+    lat = db.Column(db.DECIMAL)
+    lon = db.Column(db.DECIMAL)
     created_date = db.Column(DateTime, default=datetime.datetime.utcnow)
     recieveKey = db.Column(db.Integer)
 
@@ -87,28 +77,32 @@ def test():
     return jsonify({'test': wave.id})
 
 
-def getBestMatch(posMatches, timeCheck, checkID):
-    print("gettingMatch")
+def getBestMatch(posMatches, timeCheck, checkID, lat, long):
+    # print("gettingMatch")
     for wave in posMatches:
-        print("gettingMatch")
-        diff = wave.created_date - timeCheck
-        print(diff.total_seconds())
-        diff = diff.total_seconds()
-        if abs(diff) <= 45 and wave.userID is not checkID:
-            print(diff)
+        print(wave)
+        # print("gettingMatch")
+        latDiff = wave.lat - lat
+        print(latDiff)
+        longDiff = wave.lon - long
+        timediff = wave.created_date - timeCheck
+        # print(diff.total_seconds())
+        timediff = timediff.total_seconds()
+        if abs(timediff) <= 45 and latDiff < 0.01 and longDiff < 0.01:
+            # print(diff)
             return wave
 
 
 @app.route('/v1/waveaction', methods=['POST'])
 def makeWave():
-        #waveMatch = getBestMatch(Wave.query.all(), timeCheck)
-
+        # waveMatch = getBestMatch(Wave.query.all(), timeCheck)
     ra = request.get_json()
-    print(ra)
     if ra['id'] and ra['lat'] and ra['long'] and ra['time']:
+
         timeCheck = datetime.datetime.utcnow()
         waveMatch = getBestMatch(
-            Wave.query.all(), timeCheck, ra['id'])
+            Wave.query.filter(userID != ra['id']).all(), timeCheck, ra['id'], ra['lat'], ra['long'])
+
         if waveMatch:
             recieveKey = waveMatch.recieveKey
             # db.session.delete(waveMatch)
@@ -133,7 +127,6 @@ def makeWave():
 @app.route('/v1/getcontact', methods=['POST'])
 def getContact():
     ra = request.get_json()
-    print(ra)
     if ra['userid'] and ra['recieveKey']:
         pend = Pending.query.filter_by(id=ra['recieveKey']).first()
         if(pend.user1ID is None or pend.user2ID is None):
@@ -167,7 +160,6 @@ def write():
     print('good')
     rd = request.get_json()
 
-    print(rd)
     newUser = User(first_name=rd['firstname'], last_name=rd['lastname'], mobile=rd['mobile'],
                    email=rd['email'], address=rd['address'], birthday=rd['birthdate'])
     db.session.add(newUser)
