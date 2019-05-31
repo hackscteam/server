@@ -73,24 +73,27 @@ def home():
 
 @app.route('/v1/test', methods=['GET'])
 def test():
-    wave = Wave.query.filter_by(id=0).first()
+    wave = Wave.query.filter_by(id=3).first()
     return jsonify({'test': wave.id})
 
 
 def getBestMatch(posMatches, timeCheck, checkID, lat, long):
     # print("gettingMatch")
     for wave in posMatches:
-        print(wave)
-        # print("gettingMatch")
-        latDiff = wave.lat - lat
-        print(latDiff)
-        longDiff = wave.lon - long
-        timediff = wave.created_date - timeCheck
-        # print(diff.total_seconds())
-        timediff = timediff.total_seconds()
-        if abs(timediff) <= 45 and latDiff < 0.01 and longDiff < 0.01:
-            # print(diff)
-            return wave
+        if wave.userID != checkID:
+            print(wave.userID)
+            # print("gettingMatch")
+            latDiff = wave.lat - lat
+            print(latDiff)
+            longDiff = wave.lon - long
+            print(longDiff)
+            timediff = wave.created_date - timeCheck
+            # print(diff.total_seconds())
+            timediff = timediff.total_seconds()
+            print(timediff)
+            if abs(timediff) <= 45 and abs(latDiff) < 0.5 and abs(longDiff) < 0.5:
+                # print(diff)
+                return wave
 
 
 @app.route('/v1/waveaction', methods=['POST'])
@@ -101,7 +104,7 @@ def makeWave():
 
         timeCheck = datetime.datetime.utcnow()
         waveMatch = getBestMatch(
-            Wave.query.filter(userID != ra['id']).all(), timeCheck, ra['id'], ra['lat'], ra['long'])
+            Wave.query.all(), timeCheck, ra['id'], ra['lat'], ra['long'])
 
         if waveMatch:
             recieveKey = waveMatch.recieveKey
