@@ -8,4 +8,8 @@ env/
 conf
 .vscode/
 hackscwave-b9dbebc9f559.json
+<<<<<<< HEAD
 app.yaml
+=======
+app.yaml
+>>>>>>> 6705ca41c75725aea1820c0bceb05d8f636a8f91
